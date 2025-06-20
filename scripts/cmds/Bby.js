@@ -2,49 +2,65 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "bby",
+    name: "chat",
     aliases: [],
-    version: "1.0",
+    version: "1.1",
     author: "sasuke roy",
     countDown: 3,
     role: 0,
-    shortDescription: "Talk with AI or reply when someone says 'bby'",
-    longDescription: "Bot will reply to 'bby' and talk like a chatbot.",
-    category: "fun",
+    shortDescription: "Smart AI Chat",
+    longDescription: "Bot will respond normally or intelligently to reply messages.",
+    category: "ai",
     guide: {
-      en: "{pn} <your message> - Talk to AI bot"
+      en: "Just talk to the bot, and it will auto reply."
     }
   },
 
-  onStart: async function () {
-    // No action needed when bot starts
-  },
+  onStart: async function () {},
 
   onChat: async function ({ event, message, api }) {
-    const content = event.body?.toLowerCase();
-    if (content?.includes("bby")) {
-      return message.reply("Aw bby! 🥺 তুমি আমায় ডাকলে?");
-    }
-  },
+    const msg = event.body;
+    if (!msg || msg.length < 2) return;
 
-  onMessage: async function ({ event, message, args }) {
-    const prompt = args.join(" ");
-    if (!prompt) return message.reply("কি বলবে bby?");
-    
-    try {
-      const res = await axios.get(`https://api.affiliateplus.xyz/api/chatbot`, {
-        params: {
-          message: prompt,
-          botname: "BbyBot",
-          ownername: "sasuke",
-          user: event.senderID
-        }
-      });
+    // যদি কেউ রিপ্লাই করে কথা বলে
+    if (event.messageReply) {
+      const originalMsg = event.messageReply.body;
+      const replyMsg = msg;
 
-      return message.reply(res.data.message);
-    } catch (err) {
-      console.error(err);
-      return message.reply("AI bot এর সাথে কথা বলা যাচ্ছে না 😢");
+      try {
+        const response = await axios.get(`https://api.affiliateplus.xyz/api/chatbot`, {
+          params: {
+            message: `${replyMsg} (In response to: ${originalMsg})`,
+            botname: "OpuBot",
+            ownername: "sasuke",
+            user: event.senderID
+          }
+        });
+
+        return message.reply(response.data.message);
+      } catch (e) {
+        console.error(e);
+        return message.reply("❌ বট উত্তর দিতে পারছে না!");
+      }
+
+    } else {
+      // যদি reply না করে সরাসরি বটে কথা বলে
+      try {
+        const response = await axios.get(`https://api.affiliateplus.xyz/api/chatbot`, {
+          params: {
+            message: msg,
+            botname: "OpuBot",
+            ownername: "sasuke",
+            user: event.senderID
+          }
+        });
+
+        return message.reply(response.data.message);
+      } catch (e) {
+        console.error(e);
+        return message.reply("❌ বট এখন কথা বলতে পারছে না!");
+      }
     }
   }
 };
+
